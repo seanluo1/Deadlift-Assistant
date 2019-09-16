@@ -1,0 +1,3 @@
+# ignore large caffemodel files
+pose/mpi/pose_iter_160000.caffemodel
+pose/mpi/pose_iter_440000.caffemodel
