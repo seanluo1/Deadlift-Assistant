@@ -13,11 +13,13 @@ if MODE is "COCO":
 elif MODE is "MPI" :
     protoFile = "./pose/mpi/pose_deploy_linevec.prototxt"
     weightsFile = "./pose/mpi/pose_iter_160000.caffemodel"
+    # nPoints = 15
     nPoints = 15
+    # POSE_PAIRS = [[0,1], [1,2], [2,3], [3,4], [1,5], [5,6], [6,7], [1,14], [14,8], [8,9], [9,10], [14,11], [11,12], [12,13] ]
     POSE_PAIRS = [[0,1], [1,2], [2,3], [3,4], [1,5], [5,6], [6,7], [1,14], [14,8], [8,9], [9,10], [14,11], [11,12], [12,13] ]
-
-
-frame = cv2.imread("single.jpg")
+    right_deadlift_pose = [ [2,14], [14, 8],  [11,9], [9,10]]
+    left_deadlift_pose = [ [5,14], [14,11], [11,12], [12,13]]
+frame = cv2.imread("deadlift_1.jpg")
 frameCopy = np.copy(frame)
 frameWidth = frame.shape[1]
 frameHeight = frame.shape[0]
@@ -64,7 +66,7 @@ for i in range(nPoints):
         points.append(None)
 
 # Draw Skeleton
-for pair in POSE_PAIRS:
+for pair in left_deadlift_pose:
     partA = pair[0]
     partB = pair[1]
 
