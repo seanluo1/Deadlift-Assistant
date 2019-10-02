@@ -1,6 +1,7 @@
 import cv2
 import time
 import numpy as np
+#import caffe
 
 MODE = "MPI"
 
@@ -19,7 +20,7 @@ elif MODE is "MPI" :
     POSE_PAIRS = [[0,1], [1,2], [2,3], [3,4], [1,5], [5,6], [6,7], [1,14], [14,8], [8,9], [9,10], [14,11], [11,12], [12,13] ]
     right_deadlift_pose = [ [2,14], [14, 8],  [11,9], [9,10]]
     left_deadlift_pose = [ [5,14], [14,11], [11,12], [12,13]]
-frame = cv2.imread("deadlift_1.jpg")
+frame = cv2.imread("deadlift_2.jpg")
 frameCopy = np.copy(frame)
 frameWidth = frame.shape[1]
 frameHeight = frame.shape[0]
@@ -71,6 +72,12 @@ for pair in left_deadlift_pose:
     partB = pair[1]
 
     if points[partA] and points[partB]:
+        print(points[partA], points[partB])
+        try:
+            slope = (points[partB][1] - points[partA][1])/(points[partB][0] - points[partA][0])
+        except ZeroDivisionError:
+            slope = 0
+        print(slope)
         cv2.line(frame, points[partA], points[partB], (0, 255, 255), 2)
         cv2.circle(frame, points[partA], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
 
