@@ -15,7 +15,8 @@ elif MODE is "MPI" :
     weightsFile = "pose/mpi/pose_iter_160000.caffemodel"
     nPoints = 15
     POSE_PAIRS = [[0,1], [1,2], [2,3], [3,4], [1,5], [5,6], [6,7], [1,14], [14,8], [8,9], [9,10], [14,11], [11,12], [12,13] ]
-
+    right_deadlift_pose = [ [2,14], [14, 8],  [11,9], [9,10]]
+    left_deadlift_pose = [ [5,14], [14,11], [11,12], [12,13]]
 
 inWidth = 368
 inHeight = 368
@@ -72,7 +73,7 @@ while cv2.waitKey(1) < 0:
             points.append(None)
 
     # Draw Skeleton
-    for pair in POSE_PAIRS:
+    for pair in right_deadlift_pose:
         partA = pair[0]
         partB = pair[1]
 
