@@ -18,9 +18,10 @@ elif MODE is "MPI" :
     nPoints = 15
     # POSE_PAIRS = [[0,1], [1,2], [2,3], [3,4], [1,5], [5,6], [6,7], [1,14], [14,8], [8,9], [9,10], [14,11], [11,12], [12,13] ]
     POSE_PAIRS = [[0,1], [1,2], [2,3], [3,4], [1,5], [5,6], [6,7], [1,14], [14,8], [8,9], [9,10], [14,11], [11,12], [12,13] ]
-    right_deadlift_pose = [ [2,14], [14, 8],  [11,9], [9,10]]
-    left_deadlift_pose = [ [5,14], [14,11], [11,12], [12,13]]
-frame = cv2.imread("deadlift_2.jpg")
+    right_deadlift_pose = [[2,3],[3,4], [2,14], [14, 8],  [11,9], [9,10]]
+    left_deadlift_pose = [[5, 6], [6, 7], [5, 14], [14, 11], [11, 12], [12, 13]]
+
+frame = cv2.imread("deadlift_1.jpg")
 frameCopy = np.copy(frame)
 frameWidth = frame.shape[1]
 frameHeight = frame.shape[0]
