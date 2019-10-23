@@ -1,7 +1,42 @@
 import cv2
 import time
 import numpy as np
+import math
 #import caffe
+
+def is_adjacent(joint1, joint2):
+    joint1_ = joint1.split("_")
+    joint2_ = joint2.split("_")
+    if joint1_[0] in joint2 or joint1_[1] in joint2:
+        return True
+    elif joint2_[0] in joint1 or joint2_[1] in joint1:
+        return True
+    else:
+        return False
+
+def angle_calculation(slope1, slope2):
+    """
+    tau = tan-1(m1-m2/1+m1m2)
+    """
+    if slope1 == float("inf") and slope2 != 0:
+        return math.degrees(math.atan(1/slope2))
+
+    elif slope2 == float("inf") and slope1 !=0 :
+        return math.degrees(math.atan(1/slope1))
+
+    elif slope1 == float("inf") and slope2 == 0:
+        return 90
+
+    elif slope2 == float("inf") and slope1 == 0:
+        return 90
+
+    else:
+        angle = math.atan((slope1-slope2)/(1+slope1*slope2))
+        # if angle < 0:
+        #     angle += 180
+        #angle = round(angle, 2)
+        return math.degrees(angle)
+
 
 MODE = "MPI"
 
@@ -19,9 +54,11 @@ elif MODE is "MPI" :
     # POSE_PAIRS = [[0,1], [1,2], [2,3], [3,4], [1,5], [5,6], [6,7], [1,14], [14,8], [8,9], [9,10], [14,11], [11,12], [12,13] ]
     POSE_PAIRS = [[0,1], [1,2], [2,3], [3,4], [1,5], [5,6], [6,7], [1,14], [14,8], [8,9], [9,10], [14,11], [11,12], [12,13] ]
     right_deadlift_pose = [[2,3],[3,4], [2,14], [14, 8],  [11,9], [9,10]]
-    left_deadlift_pose = [[5, 6], [6, 7], [5, 14], [14, 11], [11, 12], [12, 13]]
+    left_deadlift_pose = [[5, 6], [6, 7], [5, 14], [14, 11], [11, 12], [12, 13], [4,3], [3,5]]
 
-frame = cv2.imread("deadlift_1.jpg")
+
+
+frame = cv2.imread("sean1.jpg")
 frameCopy = np.copy(frame)
 frameWidth = frame.shape[1]
 frameHeight = frame.shape[0]
@@ -67,21 +104,53 @@ for i in range(nPoints):
     else :
         points.append(None)
 
+joint_dictionary = {}
+mapping_dictionary = {"5,6":"Elbow_Shoulder",
+                      "6,7": "Elbow_Wrist",
+                      "5,14": "Shoulder_Chest",
+                      "14,11": "Chest_Hip",
+                      "11,12": "Hip_Knee",
+                      "12,13": "Knee_Ankle",
+                      "4,3": "Wrist_Elbow",
+                      "3,5": "Elbow_shoulder2"
+                      }
+joints_angle ={}
+
+
+
 # Draw Skeleton
 for pair in left_deadlift_pose:
     partA = pair[0]
     partB = pair[1]
 
     if points[partA] and points[partB]:
-        print(points[partA], points[partB])
+        print(points[partA], points[partB], pair)
         try:
             slope = (points[partB][1] - points[partA][1])/(points[partB][0] - points[partA][0])
         except ZeroDivisionError:
-            slope = 0
+            #slope = 0
+            slope = float("inf")
+        #print(pair[0],pair[1])
+        #print(points[pair[0]], points[pair[1]])
         print(slope)
+        joint_dictionary[mapping_dictionary[str(str(pair[0])+ ',' +str(pair[1]))]] = slope
         cv2.line(frame, points[partA], points[partB], (0, 255, 255), 2)
         cv2.circle(frame, points[partA], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
 
+
+print(joint_dictionary)
+temp_list = []
+for x in joint_dictionary:
+    temp_list.append(x)
+
+for x in range(len(temp_list)):
+    for y in range(x, len(temp_list)):
+        if  temp_list[x] != temp_list[y] and is_adjacent(temp_list[x], temp_list[y]):
+            print(temp_list[x], temp_list[y])
+            joints_angle[str(temp_list[x])+"_"+str(temp_list[y])] = angle_calculation(joint_dictionary[temp_list[x]], joint_dictionary[temp_list[y]])
+
+
+print(joints_angle)
 
 cv2.imshow('Output-Keypoints', frameCopy)
 cv2.imshow('Output-Skeleton', frame)
