@@ -2,6 +2,7 @@ import cv2
 import time
 import numpy as np
 import math
+import pprint
 #import caffe
 
 def is_adjacent(joint1, joint2):
@@ -54,11 +55,11 @@ elif MODE is "MPI" :
     # POSE_PAIRS = [[0,1], [1,2], [2,3], [3,4], [1,5], [5,6], [6,7], [1,14], [14,8], [8,9], [9,10], [14,11], [11,12], [12,13] ]
     POSE_PAIRS = [[0,1], [1,2], [2,3], [3,4], [1,5], [5,6], [6,7], [1,14], [14,8], [8,9], [9,10], [14,11], [11,12], [12,13] ]
     right_deadlift_pose = [[2,3],[3,4], [2,14], [14, 8],  [11,9], [9,10]]
-    left_deadlift_pose = [[5, 6], [6, 7], [5, 14], [14, 11], [11, 12], [12, 13], [4,3], [3,5]]
+    left_deadlift_pose = [[5, 6], [6, 7], [5, 14], [14, 11], [11, 12], [12, 13]]
 
 
 
-frame = cv2.imread("sean1.jpg")
+frame = cv2.imread("deadlift_1.jpg")
 frameCopy = np.copy(frame)
 frameWidth = frame.shape[1]
 frameHeight = frame.shape[0]
@@ -105,14 +106,12 @@ for i in range(nPoints):
         points.append(None)
 
 joint_dictionary = {}
-mapping_dictionary = {"5,6":"Elbow_Shoulder",
+mapping_dictionary = {"5,6":"Shoulder_Elbow",
                       "6,7": "Elbow_Wrist",
                       "5,14": "Shoulder_Chest",
                       "14,11": "Chest_Hip",
                       "11,12": "Hip_Knee",
-                      "12,13": "Knee_Ankle",
-                      "4,3": "Wrist_Elbow",
-                      "3,5": "Elbow_shoulder2"
+                      "12,13": "Knee_Ankle"
                       }
 joints_angle ={}
 
@@ -137,20 +136,26 @@ for pair in left_deadlift_pose:
         cv2.line(frame, points[partA], points[partB], (0, 255, 255), 2)
         cv2.circle(frame, points[partA], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
 
-
-print(joint_dictionary)
 temp_list = []
 for x in joint_dictionary:
     temp_list.append(x)
+
+joint_names_map = { 'Chest_Hip to Hip_Knee': 'Hip',
+                    'Hip_Knee to Knee_Ankle': 'Knee',
+                    'Shoulder_Chest to Chest_Hip': 'Mid-Back',
+                    'Shoulder_Elbow to Elbow_Wrist': 'Elbow',
+                    'Shoulder_Elbow to Shoulder_Chest': 'Shoulder'
+}
 
 for x in range(len(temp_list)):
     for y in range(x, len(temp_list)):
         if  temp_list[x] != temp_list[y] and is_adjacent(temp_list[x], temp_list[y]):
             print(temp_list[x], temp_list[y])
-            joints_angle[str(temp_list[x])+"_"+str(temp_list[y])] = angle_calculation(joint_dictionary[temp_list[x]], joint_dictionary[temp_list[y]])
+            joints_angle[joint_names_map[str(temp_list[x])+" to "+str(temp_list[y])]] = angle_calculation(joint_dictionary[temp_list[x]], joint_dictionary[temp_list[y]])
 
-
-print(joints_angle)
+print("Angle Calculations: ")
+pp = pprint.PrettyPrinter(indent=4)
+pp.pprint(joints_angle)
 
 cv2.imshow('Output-Keypoints', frameCopy)
 cv2.imshow('Output-Skeleton', frame)
