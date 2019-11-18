@@ -78,10 +78,7 @@ elif MODE is "MPI":
     right_deadlift_pose = [[2, 3], [3, 4], [2, 14], [14, 8], [11, 9], [9, 10]]
     left_deadlift_pose = [[5, 6], [6, 7], [5, 14], [14, 11], [11, 12], [12, 13]]
 
-#frame = cv2.imread("deadlift_1.jpg")
-#deadlift_right
-#frame = cv2.imread("deadlift_right.jpg")
-frame = cv2.imread("dead_lift_right.png")
+frame = cv2.imread("deadlift_1.jpg")
 frameCopy = np.copy(frame)
 frameWidth = frame.shape[1]
 frameHeight = frame.shape[0]
@@ -129,21 +126,22 @@ for i in range(nPoints):
         points.append(None)
 
 joint_dictionary = {}
-mapping_dictionary_left = {"5,6": "Shoulder_Elbow",
+mapping_dictionary = {"5,6": "Shoulder_Elbow",
                       "6,7": "Elbow_Wrist",
                       "5,14": "Shoulder_Chest",
                       "14,11": "Chest_Hip",
                       "11,12": "Hip_Knee",
                       "12,13": "Knee_Ankle"
                       }
-mapping_dictionary_right = {
-                          "2,3": "Shoulder_Elbow",
-                          "3,4": "Elbow_Wrist",
-                          "2,14": "Shoulder_Chest",
-                          "14,8": "Chest_Hip",
-                          "11,9": "Hip_Knee",
-                          "9,10": "Knee_Ankle"
-                      }
+# mapping_dictionary_right = {
+#                           "2,3": "Shoulder_Elbow",
+#                           "3,4": "Elbow_Wrist",
+#                           "2,14": "Shoulder_Chest",
+#                           "14,8": "Chest_Hip",
+#                           "11,9": "Hip_Knee",
+#                           "9,10": "Knee_Ankle"
+#                       }
+
 joints_angle = {}
 
 # Draw Skeleton
@@ -163,7 +161,11 @@ for pair in left_deadlift_pose:
         # print(pair[0],pair[1])
         # print(points[pair[0]], points[pair[1]])
         print(slope)
-        joint_dictionary[mapping_dictionary_left[str(str(pair[0]) + ',' + str(pair[1]))]] = slope
+#<<<<<<< johan_safe_space
+        joint_dictionary[mapping_dictionary[str(str(pair[0]) + ',' + str(pair[1]))]] = slope
+# =======
+#         joint_dictionary[mapping_dictionary_left[str(str(pair[0]) + ',' + str(pair[1]))]] = slope
+# >>>>>>> master
         cv2.line(frame, points[partA], points[partB], (0, 255, 255), 2)
         cv2.circle(frame, points[partA], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
 
@@ -171,31 +173,48 @@ temp_list = []
 for x in joint_dictionary:
     temp_list.append(x)
 
-joint_names_map = {'Chest_Hip to Hip_Knee': 'Hip1',
-                   'Knee_Ankle to Hip_Knee': 'Knee1',
-                   'Shoulder_Chest to Chest_Hip': 'Mid-Back1',
-                   'Elbow_Wrist to Shoulder_Elbow': 'Elbow1',
-                   'Shoulder_Chest to Shoulder_Elbow': 'Shoulder1',
-                   'Shoulder_Elbow to Shoulder_Chest': 'Shoulder2',
-                   'Shoulder_Elbow to Elbow_Wrist': 'Elbow2',
-                   'Chest_Hip to Shoulder_Chest': 'Mid-Back2',
-                    'Hip_Knee to Knee_Ankle': 'Knee2',
-                    'Hip_Knee to Chest_Hip': 'Hip2'
+joint_names_map = {'Chest_Hip to Hip_Knee': 'Hip',
+                   'Knee_Ankle to Hip_Knee': 'Knee',
+                   'Shoulder_Chest to Chest_Hip': 'Mid-Back',
+                   'Elbow_Wrist to Shoulder_Elbow': 'Elbow',
+                   'Shoulder_Chest to Shoulder_Elbow': 'Shoulder',
+                   'Shoulder_Elbow to Shoulder_Chest': 'Shoulder',
+                   'Shoulder_Elbow to Elbow_Wrist': 'Elbow',
+                   'Chest_Hip to Shoulder_Chest': 'Mid-Back',
+                    'Hip_Knee to Knee_Ankle': 'Knee',
+                    'Hip_Knee to Chest_Hip': 'Hip'
+# =======
+# joint_names_map = {'Chest_Hip to Hip_Knee': 'Hip1',
+#                    'Knee_Ankle to Hip_Knee': 'Knee1',
+#                    'Shoulder_Chest to Chest_Hip': 'Mid-Back1',
+#                    'Elbow_Wrist to Shoulder_Elbow': 'Elbow1',
+#                    'Shoulder_Chest to Shoulder_Elbow': 'Shoulder1',
+#                    'Shoulder_Elbow to Shoulder_Chest': 'Shoulder2',
+#                    'Shoulder_Elbow to Elbow_Wrist': 'Elbow2',
+#                    'Chest_Hip to Shoulder_Chest': 'Mid-Back2',
+#                     'Hip_Knee to Knee_Ankle': 'Knee2',
+#                     'Hip_Knee to Chest_Hip': 'Hip2'
+# >>>>>>> master
                    }
 
 for x in range(len(temp_list)):
     for y in range(x, len(temp_list)):
         if temp_list[x] != temp_list[y] and is_adjacent(temp_list[x], temp_list[y]):
             print(temp_list[x], temp_list[y])
-            joints_angle[str(temp_list[x]) + " to " + str(temp_list[y])] = angle_calculation(
+#<<<<<<< johan_safe_space
+            joints_angle[joint_names_map[str(temp_list[x]) + " to " + str(temp_list[y])]] = angle_calculation(
                 joint_dictionary[temp_list[x]], joint_dictionary[temp_list[y]])
-            # joints_angle[joint_names_map[str(temp_list[x]) + " to " + str(temp_list[y])]] = angle_calculation(
-            #     joint_dictionary[temp_list[x]], joint_dictionary[temp_list[y]])
+# =======
+#             joints_angle[str(temp_list[x]) + " to " + str(temp_list[y])] = angle_calculation(
+#                 joint_dictionary[temp_list[x]], joint_dictionary[temp_list[y]])
+#             # joints_angle[joint_names_map[str(temp_list[x]) + " to " + str(temp_list[y])]] = angle_calculation(
+#             #     joint_dictionary[temp_list[x]], joint_dictionary[temp_list[y]])
+# >>>>>>> master
 
 print("Angle Calculations: ")
 pp = pprint.PrettyPrinter(indent=4)
 pp.pprint(joints_angle)
-#pp.pprint(joint_dictionary)
+
 
 cv2.imshow('Output-Keypoints', frameCopy)
 cv2.imshow('Output-Skeleton', frame)
