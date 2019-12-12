@@ -1,7 +1,6 @@
 import cv2
 import serial
 import time
-import cv2
 import time
 import numpy as np
 import math
@@ -62,7 +61,66 @@ elif MODE is "MPI":
     right_deadlift_pose = [[2, 3], [3, 4], [2, 14], [14, 8], [8, 9], [9, 10]]
     left_deadlift_pose = [[5, 6], [6, 7], [5, 14], [14, 11], [11, 12], [12, 13]]
 
+def from_string_back_to_loc(my_string, my_dict):
+    # print(my_dict)
+    my_result = []
+    my_string = my_string.split(" to ")
+    # print(my_string)
+    first_part = my_string[0]
+    second_part = my_string[1]
 
+    for key, value in my_dict.items():
+        # print(key,value, my_string[0])
+        if value == str(my_string[0]):
+            # print("found")
+            # print(value)
+            pair = key
+            pair = pair.split(",")
+            my_result.append((int(pair[0]), int(pair[1])))
+    for key, value in my_dict.items():
+        if value == my_string[1]:
+            pair = key
+            pair = pair.split(",")
+            my_result.append((int(pair[0]), int(pair[1])))
+
+    return my_result
+
+
+def isback(my_string):
+    check_list = ["Chest_Hip","Shoulder_Chest"]
+    joints = my_string.split(" to ")
+    if joints[0] in check_list and joints[1] in check_list:
+        return True
+    else:
+        return False
+    #pass
+
+def from_string_to_loc(my_string, my_dict):
+    """
+    """
+    #print(my_dict)
+    my_result = []
+    my_string = my_string.split(" to ")
+    #print(my_string)
+    #first_part = my_string[0]
+    #second_part = my_string[1]
+
+    for key, value in my_dict.items():
+        #print(key,value, my_string[0])
+        if value == str(my_string[0]):
+            #print("found")
+            #print(value)
+            pair = key
+            pair = pair.split(",")
+            my_result.append( ( int(pair[0]), int(pair[1]) ) )
+    for key, value in my_dict.items():
+        if value == my_string[1]:
+            pair = key
+            pair = pair.split(",")
+            my_result.append( ( int(pair[0]), int(pair[1]) ) )
+
+    print(my_result)
+    return my_result
 
 def is_adjacent(joint1, joint2):
     joint1_ = joint1.split("_")
@@ -157,7 +215,8 @@ def compare(picture, model_dictionary):
                           "5,14": "Shoulder_Chest",
                           "14,11": "Chest_Hip",
                           "11,12": "Hip_Knee",
-                          "12,13": "Knee_Ankle"
+                          "12,13": "Knee_Ankle",
+                          "2,14": "Neck_Chest"
                           }
     mapping_dictionary_right = {
         "2,3": "Shoulder_Elbow",
@@ -168,37 +227,45 @@ def compare(picture, model_dictionary):
         "9,10": "Knee_Ankle"
     }
 
+    left_back_dict = {
+        "14,11": "Chest_Hip",
+        "5,14": "Shoulder_Chest"
+    }
+
     joints_angle = {}
 
     # Draw Skeleton
-    for pair in right_deadlift_pose:
+    for pair in left_deadlift_pose:
         # for pair in right_deadlift_pose:
         partA = pair[0]
         partB = pair[1]
+        # print(pair, partA, partB)
 
         if points[partA] and points[partB]:
-            # print(points[partA], points[partB], pair)
-
+            print(points[partA], points[partB], pair)
             try:
                 slope = (points[partB][1] - points[partA][1]) / (points[partB][0] - points[partA][0])
             except ZeroDivisionError:
                 # slope = 0
                 slope = float("inf")
-
+            # print(pair[0],pair[1])
+            # print(points[pair[0]], points[pair[1]])
             # print(slope)
-            joint_dictionary[mapping_dictionary_right[str(str(pair[0]) + ',' + str(pair[1]))]] = [slope, pair]
-            #
-            # joint_dictionary[mapping_dictionary_right[str(str(pair[0]) + ',' + str(pair[1]))]] = [slope, pair]
-            # # cv2.line(frame, points[partA], points[partB], (0, 255, 255), 3, lineType=cv2.LINE_AA)
+            # <<<<<<< johan_safe_space
+            joint_dictionary[mapping_dictionary[str(str(pair[0]) + ',' + str(pair[1]))]] = slope
+            # joint_dictionary[mapping_dictionary_right[str(str(pair[0]) + ',' + str(pair[1]))]] = slope
+            # =======
+            #         joint_dictionary[mapping_dictionary_left[str(str(pair[0]) + ',' + str(pair[1]))]] = slope
+            # >>>>>>> master
+            # cv2.line(frame, points[partA], points[partB], (0, 255, 255), 2)
             # cv2.circle(frame, points[partA], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
-            # cv2.circle(frame, points[partB], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
 
     temp_list = []
+    # print(joint_dictionary)
     for x in joint_dictionary:
-        print(x, joint_dictionary[x])
         temp_list.append(x)
-
     temp_list.sort()
+
     joint_names_map = {'Chest_Hip to Hip_Knee': 'Hip',
                        'Knee_Ankle to Hip_Knee': 'Knee',
                        'Shoulder_Chest to Chest_Hip': 'Mid-Back',
@@ -209,137 +276,101 @@ def compare(picture, model_dictionary):
                        'Chest_Hip to Shoulder_Chest': 'Mid-Back',
                        'Hip_Knee to Knee_Ankle': 'Knee',
                        'Hip_Knee to Chest_Hip': 'Hip'
+                       # =======
+                       # joint_names_map = {'Chest_Hip to Hip_Knee': 'Hip1',
+                       #                    'Knee_Ankle to Hip_Knee': 'Knee1',
+                       #                    'Shoulder_Chest to Chest_Hip': 'Mid-Back1',
+                       #                    'Elbow_Wrist to Shoulder_Elbow': 'Elbow1',
+                       #                    'Shoulder_Chest to Shoulder_Elbow': 'Shoulder1',
+                       #                    'Shoulder_Elbow to Shoulder_Chest': 'Shoulder2',
+                       #                    'Shoulder_Elbow to Elbow_Wrist': 'Elbow2',
+                       #                    'Chest_Hip to Shoulder_Chest': 'Mid-Back2',
+                       #                     'Hip_Knee to Knee_Ankle': 'Knee2',
+                       #                     'Hip_Knee to Chest_Hip': 'Hip2'
+                       # >>>>>>> master
                        }
-    print("here is the temp list")
-    print(temp_list)
+    # print("here is ")
+    # print(temp_list)
     for x in range(len(temp_list)):
         for y in range(x, len(temp_list)):
             if temp_list[x] != temp_list[y] and is_adjacent(temp_list[x], temp_list[y]):
-                print(temp_list[x], temp_list[y])
-                joints_angle[str(temp_list[x]) + " to " + str(temp_list[y])] = [angle_calculation(
-                    joint_dictionary[temp_list[x]][0], joint_dictionary[temp_list[y]][0]),
-                    str(temp_list[x]) + " to " + str(temp_list[y]), joint_dictionary[temp_list[x]][1],
-                    joint_dictionary[temp_list[y]][1]]
-                # joints_angle[joint_names_map[str(temp_list[x]) + " to " + str(temp_list[y])]] = angle_calculation(
-                #     joint_dictionary[temp_list[x]], joint_dictionary[temp_list[y]])
+                # print(temp_list[x], temp_list[y])
+                # <<<<<<< johan_safe_space
+                joints_angle[str(temp_list[x]) + " to " + str(temp_list[y])] = angle_calculation(
+                    joint_dictionary[temp_list[x]], joint_dictionary[temp_list[y]])
+    # =======
+    #             joints_angle[str(temp_list[x]) + " to " + str(temp_list[y])] = angle_calculation(
+    #                 joint_dictionary[temp_list[x]], joint_dictionary[temp_list[y]])
+    #             # joints_angle[joint_names_map[str(temp_list[x]) + " to " + str(temp_list[y])]] = angle_calculation(
+    #             #     joint_dictionary[temp_list[x]], joint_dictionary[temp_list[y]])
+    # >>>>>>> master
 
     print("Angle Calculations: ")
     pp = pprint.PrettyPrinter(indent=4)
     pp.pprint(joints_angle)
-    # pp.pprint(joint_dictionary)
-
-    # Use joint_dictionary to get pair coordinates
-    # print(joint_dictionary)
-    print(joints_angle)
     form = True
     for adjacent_joint in joints_angle:
-        if adjacent_joint in model_dictionary:
-            if abs(joints_angle[adjacent_joint][0] - model_dictionary[adjacent_joint]) < 10:
-                partA_1 = joints_angle[adjacent_joint][2][0]
-                partA_2 = joints_angle[adjacent_joint][2][1]
+        print(adjacent_joint)
+        # print(joints_angle[adjacent_joint])
+        if isback(adjacent_joint):
+            print("this is back")
+            if (abs(joints_angle[adjacent_joint])) < 3:  # bad angles
+                form = False
+                print("bad angles: ", abs(joints_angle[adjacent_joint]))
+                # print(adjacent_joint)
+                # print(" is close to 0")
+                coord = from_string_to_loc(adjacent_joint, left_back_dict)
+                partA_1 = coord[0][0]
+                partA_2 = coord[0][1]
 
-                partB_1 = joints_angle[adjacent_joint][3][0]
-                partB_2 = joints_angle[adjacent_joint][3][1]
+                partB_1 = coord[1][0]
+                partB_2 = coord[1][1]
+                print("This is points list: ", points)
                 if points[partA_1] and points[partA_2] and points[partB_1] and points[partB_2]:
-                    cv2.line(frame, points[partA_1], points[partA_2], (60, 255, 255), 3, lineType=cv2.LINE_AA)
-                    cv2.line(frame, points[partB_1], points[partB_2], (60, 255, 255), 3, lineType=cv2.LINE_AA)
+                    # green is 0, 255, 0
+                    # Red is 0, 0, 255
+                    # yellow 60, 255, 255
+                    # cv2.line(frame, points[partA_1], points[partA_2], (0,0, 255), 3, lineType=cv2.LINE_AA)
+                    cv2.line(frame, points[partA_1], points[partA_2], (0, 0, 255), 4, lineType=cv2.LINE_AA)
+                    cv2.line(frame, points[partB_1], points[partB_2], (0, 0, 255), 4, lineType=cv2.LINE_AA)
                     cv2.circle(frame, points[partA_1], 8, (60, 255, 255), thickness=-1, lineType=cv2.FILLED)
                     cv2.circle(frame, points[partA_2], 8, (60, 255, 255), thickness=-1, lineType=cv2.FILLED)
                     cv2.circle(frame, points[partB_1], 8, (60, 255, 255), thickness=-1, lineType=cv2.FILLED)
                     cv2.circle(frame, points[partB_2], 8, (60, 255, 255), thickness=-1, lineType=cv2.FILLED)
-            # bad case, angles not aligned
-            else:
-                form = False
+            else:  # good angles
                 # print(adjacent_joint)
-                partA_1 = joints_angle[adjacent_joint][2][0]
-                partA_2 = joints_angle[adjacent_joint][2][1]
+                coord = from_string_to_loc(adjacent_joint, left_back_dict)
+                partA_1 = coord[0][0]
+                partA_2 = coord[0][1]
 
-                partB_1 = joints_angle[adjacent_joint][3][0]
-                partB_2 = joints_angle[adjacent_joint][3][1]
+                partB_1 = coord[1][0]
+                partB_2 = coord[1][1]
                 if points[partA_1] and points[partA_2] and points[partB_1] and points[partB_2]:
-                    cv2.line(frame, points[partA_1], points[partA_2], (0, 0, 255), 3, lineType=cv2.LINE_AA)
-                    cv2.line(frame, points[partB_1], points[partB_2], (0, 0, 255), 3, lineType=cv2.LINE_AA)
-                    cv2.circle(frame, points[partA_1], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
-                    cv2.circle(frame, points[partA_2], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
-                    cv2.circle(frame, points[partB_1], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
-                    cv2.circle(frame, points[partB_2], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
+                    print("Coloring green joints!")
+                    cv2.line(frame, points[partA_1], points[partA_2], (0, 255, 0), 4, lineType=cv2.LINE_AA)
+                    cv2.line(frame, points[partB_1], points[partB_2], (0, 255, 0), 4, lineType=cv2.LINE_AA)
+                    cv2.circle(frame, points[partA_1], 8, (60, 255, 255), thickness=-1, lineType=cv2.FILLED)
+                    cv2.circle(frame, points[partA_2], 8, (60, 255, 255), thickness=-1, lineType=cv2.FILLED)
+                    cv2.circle(frame, points[partB_1], 8, (60, 255, 255), thickness=-1, lineType=cv2.FILLED)
+                    cv2.circle(frame, points[partB_2], 8, (60, 255, 255), thickness=-1, lineType=cv2.FILLED)
+        else:  # if not back, color yellow
+            coord = from_string_to_loc(adjacent_joint, mapping_dictionary)
+            partA_1 = coord[0][0]
+            partA_2 = coord[0][1]
 
-        # if adjacent_joint in mid_way_dictionary:
-        #     if abs(joints_angle[adjacent_joint][0] - mid_way_dictionary[adjacent_joint]) < 5:
-        #         partA_1 = joints_angle[adjacent_joint][2][0]
-        #         partA_2 = joints_angle[adjacent_joint][2][1]
-        #
-        #         partB_1 = joints_angle[adjacent_joint][3][0]
-        #         partB_2 = joints_angle[adjacent_joint][3][1]
-        #         if points[partA_1] and points[partA_2] and points[partB_1] and points[partB_2]:
-        #             cv2.line(frame, points[partA_1], points[partA_2], (60, 255, 255), 3, lineType=cv2.LINE_AA)
-        #             cv2.line(frame, points[partB_1], points[partB_2], (60, 255, 255), 3, lineType=cv2.LINE_AA)
-        #             cv2.circle(frame, points[partA_1], 8, (60, 255, 255), thickness=-1, lineType=cv2.FILLED)
-        #             cv2.circle(frame, points[partA_2], 8, (60, 255, 255), thickness=-1, lineType=cv2.FILLED)
-        #             cv2.circle(frame, points[partB_1], 8, (60, 255, 255), thickness=-1, lineType=cv2.FILLED)
-        #             cv2.circle(frame, points[partB_2], 8, (60, 255, 255), thickness=-1, lineType=cv2.FILLED)
-        #     else:
-        #         # print(adjacent_joint)
-        #         partA_1 = joints_angle[adjacent_joint][2][0]
-        #         partA_2 = joints_angle[adjacent_joint][2][1]
-        #
-        #         partB_1 = joints_angle[adjacent_joint][3][0]
-        #         partB_2 = joints_angle[adjacent_joint][3][1]
-        #         if points[partA_1] and points[partA_2] and points[partB_1] and points[partB_2]:
-        #             cv2.line(frame, points[partA_1], points[partA_2], (0, 0, 255), 3, lineType=cv2.LINE_AA)
-        #             cv2.line(frame, points[partB_1], points[partB_2], (0, 0, 255), 3, lineType=cv2.LINE_AA)
-        #             cv2.circle(frame, points[partA_1], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
-        #             cv2.circle(frame, points[partA_2], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
-        #             cv2.circle(frame, points[partB_1], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
-        #             cv2.circle(frame, points[partB_2], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
-        #
-        # if adjacent_joint in ending_way_dictionary:
-        #     if abs(joints_angle[adjacent_joint][0] - ending_way_dictionary[adjacent_joint]) < 5:
-        #         partA_1 = joints_angle[adjacent_joint][2][0]
-        #         partA_2 = joints_angle[adjacent_joint][2][1]
-        #
-        #         partB_1 = joints_angle[adjacent_joint][3][0]
-        #         partB_2 = joints_angle[adjacent_joint][3][1]
-        #         if points[partA_1] and points[partA_2] and points[partB_1] and points[partB_2]:
-        #             cv2.line(frame, points[partA_1], points[partA_2], (60, 255, 255), 3, lineType=cv2.LINE_AA)
-        #             cv2.line(frame, points[partB_1], points[partB_2], (60, 255, 255), 3, lineType=cv2.LINE_AA)
-        #             cv2.circle(frame, points[partA_1], 8, (60, 255, 255), thickness=-1, lineType=cv2.FILLED)
-        #             cv2.circle(frame, points[partA_2], 8, (60, 255, 255), thickness=-1, lineType=cv2.FILLED)
-        #             cv2.circle(frame, points[partB_1], 8, (60, 255, 255), thickness=-1, lineType=cv2.FILLED)
-        #             cv2.circle(frame, points[partB_2], 8, (60, 255, 255), thickness=-1, lineType=cv2.FILLED)
-        #     else:
-        #         # print(adjacent_joint)
-        #         partA_1 = joints_angle[adjacent_joint][2][0]
-        #         partA_2 = joints_angle[adjacent_joint][2][1]
-        #
-        #         partB_1 = joints_angle[adjacent_joint][3][0]
-        #         partB_2 = joints_angle[adjacent_joint][3][1]
-        #         if points[partA_1] and points[partA_2] and points[partB_1] and points[partB_2]:
-        #             cv2.line(frame, points[partA_1], points[partA_2], (0, 0, 255), 3, lineType=cv2.LINE_AA)
-        #             cv2.line(frame, points[partB_1], points[partB_2], (0, 0, 255), 3, lineType=cv2.LINE_AA)
-        #             cv2.circle(frame, points[partA_1], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
-        #             cv2.circle(frame, points[partA_2], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
-        #             cv2.circle(frame, points[partB_1], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
-        #             cv2.circle(frame, points[partB_2], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
-        else:
-
-            partA = pair[0]
-            partB = pair[1]
-
-            if points[partA] and points[partB]:
-                cv2.line(frame, points[partA], points[partB], (0, 255, 255), 3, lineType=cv2.LINE_AA)
-                cv2.circle(frame, points[partA], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
-                cv2.circle(frame, points[partB], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
-
-    # cv2.imshow('Output-Keypoints', frameCopy)
-    # cv2.imshow('Output-Skeleton', frame)
-
-    # cv2.imwrite('Output-Keypoints.jpg', frameCopy)
-    # cv2.imwrite('Output-Skeleton.jpg', frame)
-
-    print("Angle Calculations: ")
-    pp = pprint.PrettyPrinter(indent=4)
-    pp.pprint(joints_angle)
+            partB_1 = coord[1][0]
+            partB_2 = coord[1][1]
+            if points[partA_1] and points[partA_2] and points[partB_1] and points[partB_2]:
+                # green is 0, 255, 0
+                # Red is 0, 0, 255
+                # yellow 60, 255, 255
+                # cv2.line(frame, points[partA_1], points[partA_2], (0,0, 255), 3, lineType=cv2.LINE_AA)
+                cv2.line(frame, points[partA_1], points[partA_2], (60, 255, 255), 2, lineType=cv2.LINE_AA)
+                cv2.line(frame, points[partB_1], points[partB_2], (60, 255, 255), 2, lineType=cv2.LINE_AA)
+                cv2.circle(frame, points[partA_1], 8, (60, 255, 255), thickness=-1, lineType=cv2.FILLED)
+                cv2.circle(frame, points[partA_2], 8, (60, 255, 255), thickness=-1, lineType=cv2.FILLED)
+                cv2.circle(frame, points[partB_1], 8, (60, 255, 255), thickness=-1, lineType=cv2.FILLED)
+                cv2.circle(frame, points[partB_2], 8, (60, 255, 255), thickness=-1, lineType=cv2.FILLED)
 
     #cv2.imshow('Output-Keypoints', frameCopy)
 
@@ -359,13 +390,19 @@ def compare(picture, model_dictionary):
 
 
 
-
-
-
+dummy = cv2.VideoCapture(0)
+retval, frame = dummy.read()
+if retval != True:
+    raise ValueError("Can't read frame")
+cv2.imwrite('dummy.png', frame)
+print("hello")
+# port = serial.Serial("/dev/cu.HC-05-DevB", baudrate=9600)
 port = serial.Serial("/dev/cu.HC-05-DevB", baudrate=9600)
+print("port is open") if port.isOpen() else print("port is closed")
+print("start")
 mssge = port.readline().decode("utf-8")
 print(mssge)
-print("start")
+
 
 while(mssge != "gnd\n"):
     mssge = port.readline().decode("utf-8")
